@@ -2,38 +2,40 @@ package com.osesm.pifft;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class PifftCanvas implements ApplicationListener {
 
-  private Mesh mesh;
+  private Mesh squareMesh;
+  private OrthographicCamera camera;
   private Texture texture;
+  private SpriteBatch spriteBatch;
 
   @Override
   public void create() {
-    if (mesh == null) {
-      mesh = new Mesh(true, 3, 3, 
-          new VertexAttribute(Usage.Position, 3, "a_position"),
-          new VertexAttribute(Usage.ColorPacked, 4, "a_color"),
-          new VertexAttribute(Usage.TextureCoordinates, 2, "a_texCoords"));
 
-      mesh.setVertices(new float[] {
-          -0.5f, -0.5f, 0, Color.toFloatBits(255, 0, 0, 255), 0, 1,
-          0.5f, -0.5f, 0, Color.toFloatBits(0, 255, 0, 255), 1, 1, 
-          0, 0.5f, 0, Color.toFloatBits(0, 0, 255, 255), 0.5f, 0 });
-      
-      mesh.setIndices(new short[] { 0, 1, 2 });
-      
-      
-      FileHandle imageFileHandle = Gdx.files.internal("data/badlogic.jpg");
-      texture = new Texture(imageFileHandle);
+    if (squareMesh == null) {
+      squareMesh = new Mesh(true, 4, 4, new VertexAttribute(Usage.Position, 3,
+          "a_position"), new VertexAttribute(Usage.ColorPacked, 4, "a_color"));
+
+      squareMesh.setVertices(new float[] { -0.5f, -0.5f, 0,
+          Color.toFloatBits(128, 0, 0, 255), 0.5f, -0.5f, 0,
+          Color.toFloatBits(192, 0, 0, 255), -0.5f, 0.5f, 0,
+          Color.toFloatBits(192, 0, 0, 255), 0.5f, 0.5f, 0,
+          Color.toFloatBits(255, 0, 0, 255) });
+      squareMesh.setIndices(new short[] { 0, 1, 2, 3 });
     }
+
+    texture = new Texture(Gdx.files.internal("data/badlogic.jpg"));
+    spriteBatch = new SpriteBatch();
+
   }
 
   @Override
@@ -50,15 +52,25 @@ public class PifftCanvas implements ApplicationListener {
 
   @Override
   public void render() {
+    camera.update();
+    camera.apply(Gdx.gl10);
+    
+    spriteBatch.setProjectionMatrix(camera.combined);
+
     Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
-    Gdx.graphics.getGL10().glEnable(GL10.GL_TEXTURE_2D);
-    texture.bind();
-    mesh.render(GL10.GL_TRIANGLES, 0, 3);
+    squareMesh.render(GL10.GL_TRIANGLE_STRIP, 0, 4);
+    
+    spriteBatch.begin();
+    spriteBatch.draw(texture, 0, 0, 1, 1, 0, 0,
+            texture.getWidth(), texture.getHeight(), false, false);
+    spriteBatch.end();
+    
   }
 
   @Override
-  public void resize(int arg0, int arg1) {
-    // TODO Auto-generated method stub
+  public void resize(int width, int height) {
+    float aspectRatio = (float) width / (float) height;
+    camera = new OrthographicCamera(2f * aspectRatio, 2f);
 
   }
 
